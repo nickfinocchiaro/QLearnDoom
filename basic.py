@@ -167,51 +167,25 @@ for i in range(episodes):
 
 
         """ *** BEGIN BRIAN'S CODE *** """
-        #test = ApproximateQAgent()
-
-        #test.getFeatures(state, None)
-
         objects = util.Counter()
         screen_width = game.get_screen_width()
         screen_height = game.get_screen_height()
 
-       
-        ## Cacodemon is label # 127
-        left  = float('inf')
-        right = float('-inf')
-        depth = 0
-        
         for row in range(0, screen_height):
             for col in range(0, screen_width):
                 objects[labels_buf[row][col]] = (col, row, depth_buf[row][col])
             
-                if labels_buf[row][col] == 127 and col < left:
-                    left  = col
-                    depth = depth_buf[row][col]
-                if labels_buf[row][col] == 127 and col > right:
-                    right = col
-                    depth = depth_buf[row][col]
-    
-        object_center = int((left + right) / 2)
-        object_width  = right - left
-    
-        #print("Enemy at ", object_center, " at a depth of ", depth, ".")
+
         print(objects)
         
-        if object_center < ((screen_width / 2) - (object_width / 2)):
-            action = actions[0] #move left
-        elif object_center > ((screen_width / 2) + (object_width / 2)):
-            action = actions[1] #move right
-        else:
-            action = actions[2] #attack
-
-
             
         # Makes a random action and get remember reward.
-        r = game.make_action(action)
-
+        #r = game.make_action(action)
+ 
+        
+         
         """ *** END OF BRIAN'S CODE *** """
-        #r = game.make_action(choice(actions))
+        r = game.make_action(choice(actions))
         
         # Makes a "prolonged" action and skip frames:
         # skiprate = 4
@@ -239,3 +213,4 @@ for i in range(episodes):
 
 # It will be done automatically anyway but sometimes you need to do it in the middle of the program...
 game.close()
+
