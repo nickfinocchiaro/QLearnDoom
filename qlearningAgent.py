@@ -5,18 +5,24 @@ class ApproximateQAgent():
     def __init__(self, **args):
         self.weights = util.Counter()
 
-    def getQValue(self, state, action):
+    def getWeights(self):
+        return self.weights
+        
+    def getQValue(self, state, features, action):
         """
         Returns Q(state, action)
         Should return 0.0 if we have never seen a state
         or the Q node value otherwise
         """
+        keys = features.sortedKeys()
+        qSum = 0
+        for key in keys:
+            qSum += self.getWeights()[key] * features[key]
 
-        #FUNCTION STUB
-        
-        return 0
+        return qSum
 
-    def computeValueFromQValues(self, state):
+
+    def computeValueFromQValues(self, state, actions):
         """
         Returns max_action Q(state,action)
         where the max is over legal actions.  Note that if
@@ -24,9 +30,18 @@ class ApproximateQAgent():
         terminal state, you should return a value of 0.0.
         """
 
-        #FUNCTION STUB
-         
-        return 0
+        maxQValue = float('-inf')
+
+        # If the state is a terminal state, return 0.0
+        if self.isTerminal(state):
+            return 0.0
+
+        # Determine the maximum q value for all legal actions
+        for a in actions:
+            maxQValue = max(maxQValue, self.getQValue(state, a))
+
+        # Return the maximum q value
+        return maxQValue
 
     def computeActionFromQValues(self, state):
         """
@@ -35,9 +50,7 @@ class ApproximateQAgent():
         you should return None.
         """
 
-        #FUNCTION STUB
         
-        return 0
 
     def getAction(self, state):
         """
@@ -51,9 +64,23 @@ class ApproximateQAgent():
         HINT: To pick randomly from a list, use random.choice(list)
         """
 
-        #FUNCTION STUB
+        action = None
 
-        return 0
+        # if state == 'TERMINAL STATE': return None
+        if self.isTerminal(state):
+            return action
+
+        # If the action taken is to be random:
+        if util.flipCoin(self.epsilon):
+            action = random.choice(legalActions)
+
+        # Otherwise, compute the best action from the q values.
+        else:
+            action = self.computeActionFromQValues(state)
+
+        return action
+
+        
 
 
 
@@ -67,7 +94,7 @@ class ApproximateQAgent():
         return 0
 
 
-    def update(self, state, action, nextState, reward):
+    def update(self, state, features, action, nextState, reward):
         """
         The parent class calls this to observe a
         state = action => nextState and reward transition.
@@ -77,11 +104,23 @@ class ApproximateQAgent():
         it will be called on your behalf
         """
 
-        #FUNCTION STUB
+        # Calculate "difference", to be used in weight calculation
+        gamma = self.discount
+        maxQ  = self.computeValueFromQValues(nextState)
+        Qsa   = self.getQValue(state, action)
 
-        return 0
+        difference = (reward + gamma * maxQ) - Qsa
+
+        # Update weights
+        featureKeys = features.sortedKeys()
+        weightKeys  = self.weights.sortedKeys()
+
+        for fkey in featureKeys:
+            self.weights[fkey] = (self.weights[fkey] +
+                                  self.alpha * difference *
+                                  features[fkey])
                
-    def getFeatures(self, state, action):
+    def getFeatures(self, state, objects, action):
         """
         Returns simple features for a basic reflex Pacman:
         - whether food will be eaten
@@ -92,8 +131,19 @@ class ApproximateQAgent():
 
         #FUNCTION STUB
         features = util.Counter()
+
         features["bias"] = 1.0
 
-        vars = state.game_variables
+        objectKeys = features.sortedKeys()
+        
+        if 127 in objectKeys: num = 1
+        else: num = 0
+        features["#-of-enemies"] = num
 
-        print "Game Variables:", vars
+
+        return features
+
+        
+        
+
+
