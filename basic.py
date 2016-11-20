@@ -19,8 +19,13 @@ from random import choice
 from time import sleep
 from qlearningAgent import *
 
+import itertools as it
+import sys
+
+
 # Create DoomGame instance. It will run the game and communicate with you.
 game = DoomGame()
+
 
 # Now it's time for configuration!
 # load_config could be used to load configuration instead of doing it here with code.
@@ -135,14 +140,58 @@ game.init()
 # Define some actions. Each list entry corresponds to declared buttons:
 # MOVE_LEFT, MOVE_RIGHT, ATTACK
 # 5 more combinations are naturally possible but only 3 are included for transparency when watching.
-actions = [[True, False, False], [False, True, False], [False, False, True]]
+#actions = [[True, False, False], [False, True, False], [False, False, True]]
+n = game.get_available_buttons_size()
+actions = [list(a) for a in it.product([0, 1], repeat=n)]
+
 
 # Run this many episodes
-episodes = 10
+episodes = 30
 
 # Sets time that will pause the engine after each action (in seconds)
 # Without this everything would go too fast for you to keep track of what's happening.
 sleep_time = 1 / DEFAULT_TICRATE # = 0.028
+
+
+screen_width = game.get_screen_width()
+screen_height = game.get_screen_height()
+resolution = (screen_width, screen_height)
+agent = ApproximateQAgent()
+
+
+
+def extractObjects(buffers, resolution):
+    objects = util.Counter()
+    screen_width, screen_height = resolution
+    
+
+    labels_buf = buffers.labels_buffer
+    depth_buf  = buffers.depth_buffer
+    
+    if not labels_buf == None:    
+        # Extract objects from the labels buffer
+        for row in range(0, screen_height):
+            for col in range(0, screen_width):
+                value = labels_buf[row][col]
+                if not (value == 0 or value == 255):
+                    depth = depth_buf[row][col]
+                    # Create a Counter with 'value' as key
+                    # and associated data is (x, y, depth)
+                    objects[value] = (col, row, depth)
+
+    return objects
+
+
+def getGameState(game):
+    game_state = game.get_state()
+    
+    return (game_state,
+            extractObjects(game_state, resolution),
+            actions,
+            resolution,
+            game_state.game_variables)
+
+
 
 for i in range(episodes):
     print("Episode #" + str(i + 1))
@@ -152,41 +201,28 @@ for i in range(episodes):
 
     while not game.is_episode_finished():
 
+        ##############################
+        """ *** BEGIN OUR CODE *** """
+        ##############################
+        
         # Gets the state
-        state = game.get_state()
-
-        # Which consists of:
-        n           = state.number
-        vars        = state.game_variables
-        screen_buf  = state.screen_buffer
-        depth_buf   = state.depth_buffer
-        labels_buf  = state.labels_buffer
-        automap_buf = state.automap_buffer
-        labels      = state.labels
+        state = getGameState(game)
         
+        action    = agent.getAction(state)
+        reward    = game.make_action(action)        
 
+        nextState = getGameState(game)
 
-        """ *** BEGIN BRIAN'S CODE *** """
-        objects = util.Counter()
-        bestAction = qlearningAgent.getAction(state) # Nick
-        screen_width = game.get_screen_width()
-        screen_height = game.get_screen_height()
-
-        for row in range(0, screen_height):
-            for col in range(0, screen_width):
-                objects[labels_buf[row][col]] = (col, row, depth_buf[row][col])
-            
-
-        print(objects)
+        agent.update(state, action, nextState, reward)
+                    
         
-            
+        ###############################
+        """ *** END OF OUR CODE *** """
+        ###############################
+
+        
         # Makes a random action and get remember reward.
-        #r = game.make_action(action)
- 
-        
-         
-        """ *** END OF BRIAN'S CODE *** """
-        r = game.make_action(bestAction) # Nick
+        #r = game.make_action(choice(actions))
         
         # Makes a "prolonged" action and skip frames:
         # skiprate = 4
@@ -197,13 +233,13 @@ for i in range(episodes):
         # game.advance_action(skiprate)
         # r = game.get_last_reward()
 
-    """
+	"""
         # Prints state's game variables and reward.
         print("State #" + str(n))
         print("Game variables:", vars)
         print("Reward:", r)
         print("=====================")
-    """
+	"""
         if sleep_time > 0:
             sleep(sleep_time)
 
@@ -214,3 +250,4 @@ for i in range(episodes):
 
 # It will be done automatically anyway but sometimes you need to do it in the middle of the program...
 game.close()
+
