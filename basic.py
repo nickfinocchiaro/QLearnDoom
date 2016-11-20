@@ -140,9 +140,9 @@ game.init()
 # Define some actions. Each list entry corresponds to declared buttons:
 # MOVE_LEFT, MOVE_RIGHT, ATTACK
 # 5 more combinations are naturally possible but only 3 are included for transparency when watching.
-#actions = [[True, False, False], [False, True, False], [False, False, True]]
-n = game.get_available_buttons_size()
-actions = [list(a) for a in it.product([0, 1], repeat=n)]
+actions = [[True, False, False], [False, True, False], [False, False, True]]
+#n = game.get_available_buttons_size()
+#actions = [list(a) for a in it.product([0, 1], repeat=n)]
 
 
 # Run this many episodes
@@ -167,6 +167,8 @@ def extractObjects(buffers, resolution):
 
     labels_buf = buffers.labels_buffer
     depth_buf  = buffers.depth_buffer
+
+    temp = util.Counter()
     
     if not labels_buf == None:    
         # Extract objects from the labels buffer
@@ -175,9 +177,23 @@ def extractObjects(buffers, resolution):
                 value = labels_buf[row][col]
                 if not (value == 0 or value == 255):
                     depth = depth_buf[row][col]
+                    if temp[value] == 0:
+                        temp[value] = [col, col, row, depth]
+                    else:
+                        left, right, row, depth = temp[value]
+                        if col < left:
+                            temp[value] = [col, right, row, depth]
+                        elif col > right:
+                            temp[value] = [left, col, row, depth]
+                            
+        for key in temp.sortedKeys():
+            left, right, y, depth = temp[key]
+            center = int((left + right) / 2)
+            width  = right - left 
+            objects[key] = (center, width, y, depth)
                     # Create a Counter with 'value' as key
                     # and associated data is (x, y, depth)
-                    objects[value] = (col, row, depth)
+                    #objects[value] = (col, row, depth)
 
     return objects
 
@@ -189,10 +205,11 @@ def getGameState(game):
             extractObjects(game_state, resolution),
             actions,
             resolution,
-            game_state.game_variables)
+            game_state.game_variables,
+            game.is_episode_finished())
 
 
-
+print(resolution)
 for i in range(episodes):
     print("Episode #" + str(i + 1))
 
