@@ -88,10 +88,8 @@ class ApproximateQAgent():
         """
         Determines if a state is a terminal state
         """
-
-        #FUNCTION STUB
-
-        return 0
+        
+        return game.is_episode_finished() # Nick
 
 
     def update(self, state, features, action, nextState, reward):
@@ -142,8 +140,3 @@ class ApproximateQAgent():
 
 
         return features
-
-        
-        
-
-

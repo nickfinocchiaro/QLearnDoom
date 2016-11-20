@@ -168,6 +168,7 @@ for i in range(episodes):
 
         """ *** BEGIN BRIAN'S CODE *** """
         objects = util.Counter()
+        bestAction = qlearningAgent.getAction(state) # Nick
         screen_width = game.get_screen_width()
         screen_height = game.get_screen_height()
 
@@ -185,7 +186,7 @@ for i in range(episodes):
         
          
         """ *** END OF BRIAN'S CODE *** """
-        r = game.make_action(choice(actions))
+        r = game.make_action(bestAction) # Nick
         
         # Makes a "prolonged" action and skip frames:
         # skiprate = 4
@@ -196,13 +197,13 @@ for i in range(episodes):
         # game.advance_action(skiprate)
         # r = game.get_last_reward()
 
-	"""
+    """
         # Prints state's game variables and reward.
         print("State #" + str(n))
         print("Game variables:", vars)
         print("Reward:", r)
         print("=====================")
-	"""
+    """
         if sleep_time > 0:
             sleep(sleep_time)
 
@@ -213,4 +214,3 @@ for i in range(episodes):
 
 # It will be done automatically anyway but sometimes you need to do it in the middle of the program...
 game.close()
-
