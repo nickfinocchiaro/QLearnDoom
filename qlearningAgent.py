@@ -32,19 +32,19 @@ class ApproximateQAgent():
     def computeValueFromQValues(self, state):
         """
         Returns max_action Q(state,action)
-        where the max is over legal actions.  Note that if
+        where the max is over actions.  Note that if
         there are no legal actions, which is the case at the
         terminal state, you should return a value of 0.0.
         """
-        buffers, objects, actions, res, gvars = state
+        buffers, objects, actions, res, gvars, isTerminal = state
         
         maxQValue = float('-inf')
 
         # If the state is a terminal state, return 0.0
-        #if self.isTerminal(game):
-        #    return 0.0
+        if isTerminal:
+            return 0.0
 
-        # Determine the maximum q value for all legal actions
+        # Determine the maximum q value for all actions
         for a in actions:
             maxQValue = max(maxQValue, self.getQValue(state, a))
 
@@ -57,14 +57,14 @@ class ApproximateQAgent():
         are no legal actions, which is the case at the terminal state,
         you should return None.
         """
-        buffers, objects, actions, res, gvars = state
+        buffers, objects, actions, res, gvars, isTerminal = state
 
         maxQValue  = self.computeValueFromQValues(state)
         maxActions = []
 
         # If the state is a terminal state, return None
-        #if self.isTerminal(game):
-        #    return None
+        if isTerminal:
+            return None
 
         # Make a list of all actions that have qVal = maxQVal
         for a in actions:
@@ -81,18 +81,15 @@ class ApproximateQAgent():
         take the best policy action otherwise.  Note that if there are
         no legal actions, which is the case at the terminal state, you
         should choose None as the action.
-
-        HINT: You might want to use util.flipCoin(prob)
-        HINT: To pick randomly from a list, use random.choice(list)
         """
 
         action = None
 
-        buffers, objects, actions, res, gvars = state
+        buffers, objects, actions, res, gvars, isTerminal = state
         
         # if state == 'TERMINAL STATE': return None
-        #if self.isTerminal(game):
-        #    return action
+        if isTerminal:
+            return action
 
         # If the action taken is to be random:
         if util.flipCoin(self.epsilon):
@@ -106,22 +103,17 @@ class ApproximateQAgent():
 
 
 
-    def isTerminal(self, game):
+    #def isTerminal(self, game):
         """
         Determines if a state is a terminal state
         """
-        return game.is_episode_finished() 
+        #return game.is_episode_finished() 
 
     def update(self, state, action, nextState, reward):
         """
-        The parent class calls this to observe a
-        state = action => nextState and reward transition.
-        You should do your Q-Value update here
-        
-        NOTE: You should never call this function,
-        it will be called on your behalf
+        Update weights based off on transition
         """
-        buffers, objects, actions, res, gvars = state
+        buffers, objects, actions, res, gvars, isTerminal = state
         
         # Calculate "difference", to be used in weight calculation
         maxQ  = self.computeValueFromQValues(nextState)
@@ -131,8 +123,8 @@ class ApproximateQAgent():
 
         # Update weights
         featureVector = self.getFeatures(state, action)
-        featureKeys = featureVector.sortedKeys()
-        weightKeys  = self.weights.sortedKeys()
+        featureKeys   = featureVector.sortedKeys()
+        weightKeys    = self.weights.sortedKeys()
 
         for fkey in featureKeys:
             self.weights[fkey] = (self.weights[fkey] +
@@ -148,30 +140,40 @@ class ApproximateQAgent():
         - whether a ghost is one step away
         """
 
-        buffers, objects, actions, res, gvars = state
-        width, height = res
+        buffers, objects, actions, res, gvars, isTerminal = state
+        screen_width, screen_height = res
 
-        halfwidth  = int (width / 2)
-        buf        = 5
-        
+        center  = screen_width / 2
+              
         features   = util.Counter()
         #features["bias"] = 1.0
 
         objectKeys = objects.sortedKeys()
+        closestObject = float('inf')
 
-        for key in objectKeys:
-            if objects[key][0] in range(0, halfwidth - buf):
-                features['enemy-on-left'] = 1.0
-            elif objects[key][0] in range(halfwidth - buf, halfwidth + buf):
-                features['enemy-at-center'] = 1.0
-            elif objects[key][0] in range(halfwidth + buf, width):
-                features['enemy-on-right'] = 1.0
+        features['#-objs-at-center'] = 0
+        
+        for key in objectKeys:    
+            x, width, y, depth = objects[key]
+            offset = width / 2
+            
+            #if depth < 30:
+            #    features['#-of-objs-<-30-away'] += 1
+            #if x in range(0, center - offset):
+            #    features['#-objs-on-left'] += 1
+            if x in range(center - offset, center + offset):
+                features['#-objs-at-center'] += 1
+            
+            #elif x in range(center + offset, width):
+            #    features['#-objs-on-right'] += 1
 
-        for idx, a in enumerate(action):
-            if not a == 0:
-                features['action-' + str(idx)] = 1.0
-            
-            
+        # 'shot-obj' either 1 or 0 if marine will shoot an object if taking
+        # the action in the given state.
+        if action == [False, False, True] and features['#-objs-at-center'] > 0:
+            features['shot-obj'] = 1
+        else:
+            features['shot-obj'] = 0
+        features.divideAll(10.0)    
         return features
 
         
