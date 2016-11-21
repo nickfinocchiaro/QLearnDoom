@@ -12,6 +12,8 @@
 # Student side autograding was added by Brad Miller, Nick Hay, and 
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
+# We are using this code as is from the berkely problem sets for the VizDoom project
+
 
 import sys
 import inspect

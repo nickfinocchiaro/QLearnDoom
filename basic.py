@@ -1,4 +1,14 @@
 #!/usr/bin/env python
+#
+# Authors: Nicholas Finocchiaro and Brian Thomas
+#
+# We have extended this code to suit the needs of our 
+# artificial intelligence final project. A ViZDOOM q-learner.
+# 
+#
+# all licensing information can be found here:
+# https://github.com/Marqt/ViZDoom#cite-as
+#
 
 #####################################################################
 # This script presents how to use the most basic features of the environment.
@@ -250,15 +260,15 @@ for i in range(episodes):
         # game.advance_action(skiprate)
         # r = game.get_last_reward()
 
-	"""
+    """
         # Prints state's game variables and reward.
         print("State #" + str(n))
         print("Game variables:", vars)
         print("Reward:", r)
         print("=====================")
-	"""
-        if sleep_time > 0:
-            sleep(sleep_time)
+    """
+    if sleep_time > 0:
+        sleep(sleep_time)
 
     # Check how the episode went.
     print("Episode finished.")
@@ -267,4 +277,3 @@ for i in range(episodes):
 
 # It will be done automatically anyway but sometimes you need to do it in the middle of the program...
 game.close()
-
