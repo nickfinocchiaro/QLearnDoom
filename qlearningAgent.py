@@ -162,50 +162,35 @@ class ApproximateQAgent():
 
         objectKeys = list(objects.keys())
         
-        closestObject = float('inf')
-
-
+        #closestObject = float('inf')
         
-        # Objects in range (at center of screen to be shot)
         enemy_left   = False
-        enemy_center = False #_in_range = False
+        enemy_center = False
         enemy_right  = False
 
+
+        # Determine if there are enemies to the left, right, and center
         for key in objectKeys:
             left, right, coords = objects[key]
-            # Ignore if the object is self.
+            # Ignore if the object is self (value of self is 255).
             if not key == 255:
-                # Left
+                # If an enemy is to the left
                 if center_screen in range(0, left):
                     enemy_left = True
-            
-                # Center
+                # If an enemy is in my sights? (center)
                 if center_screen in range(left, right):
                     enemy_center = True
-                
-                # Right
+                # If an enemy is to the right?
                 if center_screen in range(right, screen_width):
                     enemy_right = True
                 
 
-        """
-        for key in objectKeys:    
-            x, width, y, depth = objects[key]
-            offset = width / 2
-
-            # Left
-            if x in range(0, center - offset):
-                enemy_left
-            # Center
-            if x in range(center - offset, center + offset):
-                obj_in_range = True
-        """
-        # Am I moving in the wrong direction?
-        features["moving-wrong-direction"] = 0
+        # Am I moving in the correct direction?
+        features["moving-in-correct-direction"] = 0
         if enemy_left and action == [True, False, False]:
-            features["moving-wrong-direction"] = 1
+            features["moving-in-correct-direction"] = 1
         if enemy_right and action == [False, True, False]:
-            features["moving-wrong-direction"] = 1
+            features["moving-in-correct-direction"] = 1
             
         # Did I shoot at nothing? If yes, value is 1. No, value is 0.
         if (not enemy_center) and (action == [False, False, True]):
@@ -213,33 +198,5 @@ class ApproximateQAgent():
         else:
             features["shot-at-nothing"] = 0
 
-        """
-        # If no objects at center, does action move an object to the center?
-        features["moves-obj-to-center"] = 0
-        # If the object is already at center, assign 1 to this feature.
-        if obj_in_range:
-            features["moves-obj-to-center"] = 1
-        else:
             
-            for key in objectKeys:
-                x, width, y, depth = objects[key]
-                offset = width / 2
-
-                if (x in range(0, center - offset) and
-                    action == [False, True, False]):
-                    features["moves-obj-to-center"] = 1
-                if (x in range(center + offset, screen_width) and
-                    action == [True, False, False]):
-                    features["moves-obj-to-center"] = 1
-        """
-        
-        """
-        # 'shot-obj' either 1 or 0 if marine will shoot an object if taking
-        # the action in the given state.
-        if action == [False, False, True] and features['#-objs-at-center'] > 0:
-            features['shot-obj'] = 1
-        else:
-            features['shot-obj'] = 0
-        features.divideAll(10.0)
-        """
         return features
