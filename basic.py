@@ -38,6 +38,9 @@ game = DoomGame()
 # Now it's time for configuration!
 game.load_config("../../examples/config/basic.cfg")
 
+# Sets resolution. Default is 320X240
+game.set_screen_resolution(ScreenResolution.RES_160X120)
+
 # Enables depth buffer.
 game.set_depth_buffer_enabled(True)
 
@@ -81,11 +84,10 @@ game.add_available_game_variable(GameVariable.WEAPON6)
 game.add_available_game_variable(GameVariable.WEAPON7)
 game.add_available_game_variable(GameVariable.WEAPON8)
 game.add_available_game_variable(GameVariable.WEAPON9)
+game.add_available_game_variable(GameVariable.POSITION_X)
+game.add_available_game_variable(GameVariable.POSITION_Y)
+game.add_available_game_variable(GameVariable.POSITION_Z)
 """
-#game.add_available_game_variable(GameVariable.POSITION_X)
-#game.add_available_game_variable(GameVariable.POSITION_Y)
-#game.add_available_game_variable(GameVariable.POSITION_Z)
-
 
 # Turns on the sound. (turned off by default)
 game.set_sound_enabled(True)
@@ -111,8 +113,6 @@ screen_width = game.get_screen_width()
 screen_height = game.get_screen_height()
 resolution = (screen_width, screen_height)
 agent = ApproximateQAgent()
-
-
 
 
 def distance(pos1, pos2):
@@ -163,33 +163,27 @@ def objectDistances(buffers):
     return distances
 
 
-def extractObjects2(buffers, resolution):
-    return objectCoordinates(buffers)
-
 def extractObjects(buffers, resolution):
-    #distances   = objectDistances(buffers)
-    coordinates = objectCoordinates(buffers)
+    coordinates = objectCoordinates(buffers)    
+    labels_buf  = buffers.labels_buffer
     
-    #objects = util.Counter()
-    #screen_width, screen_height = resolution
-    leftmost  = 0
-    rightmost = 1
-
-    labels_buf = buffers.labels_buffer
-    #depth_buf  = buffers.depth_buffer
-
-    #temp = {}
-    objects = {}
-    if not labels_buf == None:    
-        # Extract objects from the labels buffer
+    # Objects dictionary data: [leftmost pixel, rightmost pixel, object coords]
+    objects     = {}
+    
+    if labels_buf == None:
+        return objects
+    else:
+        # Examine every cell of the buffer.
         for row in range(0, screen_height):
             for col in range(0, screen_width):
                 value = labels_buf[row][col]
+                # If it has a value other than 0 (0 == No object seen)
                 if not (value == 0):
+
                     # If the object isn't in the dictionary, add it.
                     if not value in list(objects.keys()):
-                        # Dictionary entry: [left pixel, right pixel, coords]
                         objects[value] = [col, col, coordinates[value]]
+
                     # Otherwise, update the left or right most pixel location.
                     else:
                         left, right, coords = objects[value]
@@ -198,25 +192,7 @@ def extractObjects(buffers, resolution):
                         elif col > right:
                             objects[value] = [left, col, coords]
 
-                    """
-                    if temp[value] == 0:
-                        temp[value] = [col, col, row, depth]
-                    else:
-                        left, right, row, depth = temp[value]
-                        if col < left:
-                            temp[value] = [col, right, row, depth]
-                        elif col > right:
-                            temp[value] = [left, col, row, depth]
-                    """
-        """
-        for key in temp.sortedKeys():
-            left, right, y, depth = temp[key]
-            center = int((left + right) / 2)
-            width  = right - left 
-            objects[key] = (center, width, y, distances[key])
-        """
-
-    return objects
+        return objects
 
 
 def getGameState(game):
@@ -243,27 +219,20 @@ for i in range(episodes):
         ##############################
         """ *** BEGIN OUR CODE *** """
         ##############################
-        
-        # Gets the state
-        state        = getGameState(game)#, old_position)
-        #new_position = (state[4][0], state[4][1], state[4][2])
+    
+        state        = getGameState(game)
 
-        #if not old_position == None:
-        #    print(distance(old_position, new_position))
-              
         action       = agent.getAction(state)
+
         reward       = game.make_action(action)
 
-        #old_position = new_position
-        nextState    = getGameState(game)#, old_position)
+        nextState    = getGameState(game)
 
         agent.update(state, action, nextState, reward)
                     
-        
         ###############################
         """ *** END OF OUR CODE *** """
         ###############################
-
 
     if sleep_time > 0:
         sleep(sleep_time)
