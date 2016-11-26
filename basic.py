@@ -116,102 +116,6 @@ screen_height = game.get_screen_height()
 resolution = (screen_width, screen_height)
 agent = ApproximateQAgent()
 
-"""
-def distance(pos1, pos2):
-    # Objects received in form [x, y, z] coordinates
-
-    # Find the sum of the squares
-    sumOfSquares = 0
-    for i in range(0, 3):
-        sumOfSquares += pow(pos1[i] - pos2[i], 2)
-        
-    # Return the square root of the sum of the squares.
-    return math.sqrt(sumOfSquares)
-"""
-
-"""
-def objectCoordinates(buffers):
-    # Input:  game.get_state()
-    # Output: a dictionary of coordinates of objects with
-    #         game.get_state().labels.value as keys
-
-    coordinates = {}
-    for l in buffers.labels:
-        coordinates[l.value] = [l.object_position_x,
-                                l.object_position_y,
-                                l.object_position_z]
-
-    return coordinates
-"""
-
-"""
-def objectDistances(buffers):
-    # Input:  game.get_state()
-    # Output: a dictionary of distances of objects with
-    #         game.get_state().labels.value as keys
-
-    coordinates = {}
-    for l in buffers.labels:
-        coordinates[l.value] = [l.object_position_x,
-                                l.object_position_y,
-                                l.object_position_z]
-
-    gv = buffers.game_variables
-
-    distances = {}
-
-    
-    for key in list(coordinates.keys()):
-        distances[key] = distance(coordinates[key], coordinates[255])
-                
-    return distances
-"""
-
-"""
-def extractObjects(buffers, resolution):
-    coordinates = objectCoordinates(buffers)    
-    labels_buf  = buffers.labels_buffer
-    
-    # Objects dictionary data: [leftmost pixel, rightmost pixel, object coords]
-    objects     = {}
-    
-    if labels_buf == None:
-        return objects
-    else:
-        # Examine every cell of the buffer.
-        for row in range(0, screen_height):
-            for col in range(0, screen_width):
-                value = labels_buf[row][col]
-                # If it has a value other than 0 (0 == No object seen)
-                if not (value == 0):
-
-                    # If the object isn't in the dictionary, add it.
-                    if not value in list(objects.keys()):
-                        objects[value] = [col, col, coordinates[value]]
-
-                    # Otherwise, update the left or right most pixel location.
-                    else:
-                        left, right, coords = objects[value]
-                        if col < left:
-                            objects[value] = [col, right, coords]
-                        elif col > right:
-                            objects[value] = [left, col, coords]
-
-        return objects
-"""
-"""
-def getGameState(game):
-    game_state   = game.get_state()
-    
-    return (game_state,
-            extractObjects(game_state, resolution),
-            actions,
-            resolution,
-            game_state.game_variables,
-            game.is_episode_finished(),
-"basic")
-
-"""
 
 for i in range(episodes):
     print("Episode #" + str(i + 1))
@@ -219,17 +123,17 @@ for i in range(episodes):
     # Starts a new episode. It is not needed right after init() but it doesn't cost much. At least the loop is nicer.
     game.new_episode()
     
-    old_position = None
+
     while not game.is_episode_finished():
 
         ##############################
         """ *** BEGIN OUR CODE *** """
         ##############################
-    
+
         state        = doomUtils.getGameState(game, scenario, all_actions)
 
         action       = agent.getAction(state)
-
+        
         reward       = game.make_action(action)
 
         nextState    = doomUtils.getGameState(game, scenario, all_actions)
