@@ -18,7 +18,7 @@
 #
 
 from vizdoom import *
-import random, util, math
+import random, util, extractor, math
 
 class ApproximateQAgent():
     def __init__(self, **args):
@@ -38,7 +38,7 @@ class ApproximateQAgent():
         or the Q node value otherwise
         """
 
-        featureVector = self.getFeatures(state, action)
+        featureVector = extractor.getFeatures(state, action)
         
         keys = featureVector.sortedKeys()
         qSum = 0
@@ -55,7 +55,7 @@ class ApproximateQAgent():
         there are no legal actions, which is the case at the
         terminal state, you should return a value of 0.0.
         """
-        buffers, objects, actions, res, gvars, isTerminal = state
+        buffers, objects, all_actions, res, gvars, isTerminal, scenario = state
         
         maxQValue = float('-inf')
 
@@ -64,7 +64,7 @@ class ApproximateQAgent():
             return 0.0
 
         # Determine the maximum q value for all actions
-        for a in actions:
+        for a in all_actions:
             maxQValue = max(maxQValue, self.getQValue(state, a))
 
         # Return the maximum q value
@@ -76,7 +76,7 @@ class ApproximateQAgent():
         are no legal actions, which is the case at the terminal state,
         you should return None.
         """
-        buffers, objects, actions, res, gvars, isTerminal = state#, dist = state
+        buffers, objects, all_actions, res, gvars, isTerminal, scenario = state
 
         maxQValue  = self.computeValueFromQValues(state)
         maxActions = []
@@ -86,7 +86,7 @@ class ApproximateQAgent():
             return None
 
         # Make a list of all actions that have qVal = maxQVal
-        for a in actions:
+        for a in all_actions:
             qVal = self.getQValue(state, a)
             if qVal == maxQValue:
                 maxActions.append(a)
@@ -104,7 +104,7 @@ class ApproximateQAgent():
 
         action = None
 
-        buffers, objects, actions, res, gvars, isTerminal = state#, dist = state
+        buffers, objects, all_actions, res, gvars, isTerminal, scenario = state
         
         # if state == 'TERMINAL STATE': return None
         if isTerminal:
@@ -112,7 +112,7 @@ class ApproximateQAgent():
 
         # If the action taken is to be random:
         if util.flipCoin(self.epsilon):
-            action = random.choice(actions)
+            action = random.choice(all_actions)
 
         # Otherwise, compute the best action from the q values.
         else:
@@ -121,18 +121,11 @@ class ApproximateQAgent():
         return action
 
 
-
-    #def isTerminal(self, game):
-        """
-        Determines if a state is a terminal state
-        """
-        #return game.is_episode_finished() 
-
     def update(self, state, action, nextState, reward):
         """
         Update weights based off on transition
         """
-        buffers, objects, actions, res, gvars, isTerminal = state#, dist = state
+        buffers, objects, all_actions, res, gvars, isTerminal, scenario = state
         
         # Calculate "difference", to be used in weight calculation
         maxQ  = self.computeValueFromQValues(nextState)
@@ -141,7 +134,7 @@ class ApproximateQAgent():
         difference = (reward + self.gamma * maxQ) - Qsa
 
         # Update weights
-        featureVector = self.getFeatures(state, action)
+        featureVector = extractor.getFeatures(state, action)
         featureKeys   = featureVector.sortedKeys()
         weightKeys    = self.weights.sortedKeys()
 
@@ -149,9 +142,10 @@ class ApproximateQAgent():
             self.weights[fkey] = (self.weights[fkey] +
                                   self.alpha * difference *
                                   featureVector[fkey])
-               
+
+    """
     def getFeatures(self, state, action):
-        buffers, objects, actions, res, gvars, isTerminal = state
+        buffers, objects, all_actions, res, gvars, isTerminal = state
         
         screen_width, screen_height = res
 
@@ -193,10 +187,17 @@ class ApproximateQAgent():
             features["moving-in-correct-direction"] = 1
             
         # Did I shoot at nothing? If yes, value is 1. No, value is 0.
-        if (not enemy_center) and (action == [False, False, True]):
+        # List all actions that shoot.
+        shoot_actions = []
+        for a in all_actions:
+            if a[2] == True:
+                shoot_actions.append(a)
+                
+        if (not enemy_center) and (action in shoot_actions):
             features["shot-at-nothing"] = 1
         else:
             features["shot-at-nothing"] = 0
 
             
         return features
+    """
