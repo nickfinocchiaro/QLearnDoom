@@ -28,7 +28,7 @@ from vizdoom import *
 from random import choice
 from time import sleep
 from qlearningAgent import *
-
+import doomUtils
 import itertools as it
 import sys
 
@@ -37,6 +37,7 @@ game = DoomGame()
 
 # Now it's time for configuration!
 game.load_config("../../examples/config/basic.cfg")
+scenario = "basic"
 
 # Sets resolution. Default is 320X240
 game.set_screen_resolution(ScreenResolution.RES_160X120)
@@ -98,7 +99,8 @@ game.init()
 
 # Define some actions. Each list entry corresponds to declared buttons:
 # MOVE_LEFT, MOVE_RIGHT, ATTACK
-actions = [[True, False, False], [False, True, False], [False, False, True]]
+all_actions = [[True, False, False], [False, True, False],
+               [False, False, True]]
 
 
 # Run this many episodes
@@ -114,7 +116,7 @@ screen_height = game.get_screen_height()
 resolution = (screen_width, screen_height)
 agent = ApproximateQAgent()
 
-
+"""
 def distance(pos1, pos2):
     # Objects received in form [x, y, z] coordinates
 
@@ -125,8 +127,9 @@ def distance(pos1, pos2):
         
     # Return the square root of the sum of the squares.
     return math.sqrt(sumOfSquares)
+"""
 
-
+"""
 def objectCoordinates(buffers):
     # Input:  game.get_state()
     # Output: a dictionary of coordinates of objects with
@@ -139,8 +142,9 @@ def objectCoordinates(buffers):
                                 l.object_position_z]
 
     return coordinates
+"""
 
-
+"""
 def objectDistances(buffers):
     # Input:  game.get_state()
     # Output: a dictionary of distances of objects with
@@ -161,8 +165,9 @@ def objectDistances(buffers):
         distances[key] = distance(coordinates[key], coordinates[255])
                 
     return distances
+"""
 
-
+"""
 def extractObjects(buffers, resolution):
     coordinates = objectCoordinates(buffers)    
     labels_buf  = buffers.labels_buffer
@@ -193,8 +198,8 @@ def extractObjects(buffers, resolution):
                             objects[value] = [left, col, coords]
 
         return objects
-
-
+"""
+"""
 def getGameState(game):
     game_state   = game.get_state()
     
@@ -203,9 +208,10 @@ def getGameState(game):
             actions,
             resolution,
             game_state.game_variables,
-            game.is_episode_finished())
+            game.is_episode_finished(),
+"basic")
 
-
+"""
 
 for i in range(episodes):
     print("Episode #" + str(i + 1))
@@ -220,13 +226,13 @@ for i in range(episodes):
         """ *** BEGIN OUR CODE *** """
         ##############################
     
-        state        = getGameState(game)
+        state        = doomUtils.getGameState(game, scenario, all_actions)
 
         action       = agent.getAction(state)
 
         reward       = game.make_action(action)
 
-        nextState    = getGameState(game)
+        nextState    = doomUtils.getGameState(game, scenario, all_actions)
 
         agent.update(state, action, nextState, reward)
                     

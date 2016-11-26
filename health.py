@@ -17,17 +17,19 @@ from vizdoom import *
 
 from random import choice
 from time import sleep
-from healthlearningAgent import *
+#from healthlearningAgent import *
+from qlearningAgent import *
 
 import itertools as it
-import math
+import math, doomUtils
 
 
 # Create DoomGame instance. It will run the game and communicate with you.
 game = DoomGame()
 game.load_config("../../examples/config/health_gathering.cfg")
-#game.set_mode(Mode.ASYNC_PLAYER)
-#game.set_ticrate(35)
+scenario = "health"
+game.set_mode(Mode.ASYNC_PLAYER)
+game.set_ticrate(35)
 
 # Enables depth buffer.
 game.set_depth_buffer_enabled(True)
@@ -64,9 +66,14 @@ game.init()
 # 5 more combinations are naturally possible but only 3 are included for transparency when watching.
 #actions = [[True, False, False], [False, True, False], [False, False, True]]
 n = game.get_available_buttons_size()
-actions = [list(a) for a in it.product([0, 1], repeat=n)]
+all_actions = []
+temp_actions = [list(a) for a in it.product([False, True], repeat=n)]
+# Remove actions where you turn left and turn right at the same time
+for a in temp_actions:
+	if not (a[0] == True and a[1] == True):
+		all_actions.append(a)	
 
-
+#actions = [[True, False, False], [False, True, False], [False, False, True]]
 # Run this many episodes
 episodes = 60
 
@@ -78,7 +85,7 @@ sleep_time = 1 / DEFAULT_TICRATE # = 0.028
 agent      = ApproximateQAgent()
 resolution = (game.get_screen_width(), game.get_screen_height())
 skiprate   = 1
-
+"""
 def distance(obj1, obj2):
     # Objects received in form [x, y, z] coordinates
 
@@ -135,14 +142,16 @@ def extractObjects(buffers, resolution):
 
 def getGameState(game):
     game_state = game.get_state()
+
+    #if game_state.number == ?
     
     return (game_state,
-            extractObjects(game_state, resolution),
+            doomUtils.extractObjects(game_state, resolution),
             actions,
             resolution,
             game_state.game_variables,
             game.is_episode_finished())
-
+"""
 
 
 for i in range(episodes):
@@ -161,13 +170,15 @@ for i in range(episodes):
         """ *** BEGIN OUR CODE *** """
         ##############################
         
-        state = getGameState(game)
+        state = doomUtils.getGameState(game, scenario, all_actions)
+
+        #print(state[0].number)
         
         action    = agent.getAction(state)
 
         reward    = game.make_action(action, skiprate)        
 
-        nextState = getGameState(game)
+        nextState = doomUtils.getGameState(game, scenario, all_actions)
 
         agent.update(state, action, nextState, reward)
                             
