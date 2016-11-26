@@ -85,73 +85,6 @@ sleep_time = 1 / DEFAULT_TICRATE # = 0.028
 agent      = ApproximateQAgent()
 resolution = (game.get_screen_width(), game.get_screen_height())
 skiprate   = 1
-"""
-def distance(obj1, obj2):
-    # Objects received in form [x, y, z] coordinates
-
-    # Find the sum of the squares
-    sumOfSquares = 0
-    for i in range(0, 3):
-        sumOfSquares += pow(obj1[i] - obj2[i], 2)
-
-    # Return the square root of the sum of the squares.
-    return math.sqrt(sumOfSquares)
-
-
-
-def objectDistances(buffers):
-    # Input:  game.get_state()
-    # Output: a dictionary of distances of objects (excluding self) with
-    #         game.get_state().labels.value as keys
-
-    coordinates = {}
-    for l in buffers.labels:
-        coordinates[l.value] = [l.object_position_x,
-                                l.object_position_y,
-                                l.object_position_z]
-
-        
-    gv = buffers.game_variables
-    #print(gv)
-    if not gv == None:
-        coordinates[255] = [gv[1], gv[2], gv[3]]
-    distances = {}
-    #print(coordinates.keys())
-    for key in list(coordinates.keys()):
-        distances[key] = distance(coordinates[key], coordinates[255])
-
-    return distances
-
-            
-def extractObjects(buffers, resolution):
-    distances = objectDistances(buffers)
-    
-    objects = {}
-    
-    labels_buf = buffers.labels_buffer
-
-    keys = []
-    for l in buffers.labels:
-        keys.append(l.value)
-
-    for key in keys:
-        objects[key] = ('Medikit', distances[key])
-
-    return objects
-
-
-def getGameState(game):
-    game_state = game.get_state()
-
-    #if game_state.number == ?
-    
-    return (game_state,
-            doomUtils.extractObjects(game_state, resolution),
-            actions,
-            resolution,
-            game_state.game_variables,
-            game.is_episode_finished())
-"""
 
 
 for i in range(episodes):
@@ -172,8 +105,6 @@ for i in range(episodes):
         
         state = doomUtils.getGameState(game, scenario, all_actions)
 
-        #print(state[0].number)
-        
         action    = agent.getAction(state)
 
         reward    = game.make_action(action, skiprate)        
