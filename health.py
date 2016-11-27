@@ -26,36 +26,71 @@ import math, doomUtils
 
 # Create DoomGame instance. It will run the game and communicate with you.
 game = DoomGame()
-game.load_config("../../examples/config/health_gathering.cfg")
-scenario = "health"
-game.set_mode(Mode.ASYNC_PLAYER)
-game.set_ticrate(35)
 
-# Enables depth buffer.
-game.set_depth_buffer_enabled(True)
+#################################################
+#################################################
+# CANT USE CONFIGURATION FILE BECAUSE POSITION
+# VARIABLES NEED TO BE FIRST THREE VARIABLES
+##################################################
+##################################################
+game.set_vizdoom_path("../../bin/vizdoom")
+game.set_doom_game_path("../../scenarios/freedoom2.wad")
+game.set_doom_scenario_path("../../scenarios/health_gathering.wad")
+game.set_doom_map("map01")
+
+
+# Rewards
+game.set_living_reward(1)
+game.set_death_penalty(100)
+
+
+# Rendering options
+game.set_screen_resolution(ScreenResolution.RES_160X120)
+game.set_render_hud(False)
+game.set_render_minimal_hud(False)
+game.set_render_crosshair(False)
+game.set_render_weapon(False)
+game.set_render_decals(False)
+game.set_render_particles(False)
+game.set_render_effects_sprites(False)
+game.set_render_messages(False)
+game.set_render_corpses(False)
+game.set_window_visible(True)
+
+# Make episodes finish after 2100 actions (tics)
+game.set_episode_timeout(2100)
+
+
+# Available buttons
+game.add_available_button(Button.TURN_LEFT)
+game.add_available_button(Button.TURN_RIGHT)
+game.add_available_button(Button.MOVE_FORWARD)
+
 
 # Enables labeling of in game objects labeling.
 game.set_labels_buffer_enabled(True)
 
-# Enables buffer with top down map of the current episode/level.
-game.set_automap_buffer_enabled(True)
+# Turns on the sound. (turned off by default)
+game.set_sound_enabled(True)
+
+###################################################
+###################################################
+
+scenario = "health"
+game.set_mode(Mode.PLAYER)
+#game.set_ticrate(350)
+
+# Enables buffers
+game.set_labels_buffer_enabled(True)
+game.set_depth_buffer_enabled(True)
+
 
 
 # Adds game variables that will be included in state.
 game.add_available_game_variable(GameVariable.POSITION_X)
 game.add_available_game_variable(GameVariable.POSITION_Y)
 game.add_available_game_variable(GameVariable.POSITION_Z)
-
-
-# Makes the window appear (turned on by default)
-game.set_window_visible(True)
-
-# Turns on the sound. (turned off by default)
-game.set_sound_enabled(True)
-
-
-# Sets ViZDoom mode (PLAYER, ASYNC_PLAYER, SPECTATOR, ASYNC_SPECTATOR, PLAYER mode is default)
-#game.set_mode(Mode.PLAYER)
+game.add_available_game_variable(GameVariable.HEALTH)
 
 # Initialize the game. Further configuration won't take any effect from now on.
 #game.set_console_enabled(True)
@@ -74,6 +109,7 @@ for a in temp_actions:
 		all_actions.append(a)	
 
 #actions = [[True, False, False], [False, True, False], [False, False, True]]
+
 # Run this many episodes
 episodes = 60
 
@@ -105,9 +141,13 @@ for i in range(episodes):
         
         state = doomUtils.getGameState(game, scenario, all_actions)
 
+        # Print health about every two seconds.
+        if state[0].number % 60 == 0:
+                print("Health: ", state[0].game_variables[3])
+        
         action    = agent.getAction(state)
 
-        reward    = game.make_action(action, skiprate)        
+        reward    = game.make_action(action)        
 
         nextState = doomUtils.getGameState(game, scenario, all_actions)
 
