@@ -97,22 +97,23 @@ def getHealthFeatures(state, action):
     else:
         medikits_visible = True
 
+        
     # My position
     gv = buffers.game_variables
     my_pos = (gv[0], gv[1], gv[2])
-            
-    closest_medikit = (None, float('inf'))
+
+    
     # What is the closest medikit?
+    closest_medikit = (None, float('inf'))
     for key in objectKeys:
         distance_to_medikit = doomUtils.distance(my_pos, objects[key][2])
         if distance_to_medikit < closest_medikit[1]:
             closest_medikit = (key, distance_to_medikit)
 
+    # If there is a medikit that's closest.
     if not closest_medikit[0] == None:
         # Is the closest medikit to the left, center, or right?
-        medikit_left   = False
-        medikit_center = False
-        medikit_right  = False
+        medikit_left = medikit_center = medikit_right = False
         center = screen_width / 2
         obj_left  = objects[closest_medikit[0]][0]
         obj_right = objects[closest_medikit[0]][1]
@@ -123,23 +124,42 @@ def getHealthFeatures(state, action):
         elif center in range(obj_right, screen_width):
             medikit_left   = True
 
-    features["moving-toward-health"] = 0
-    # Are Medikits visible?
+    # If medikits are visible, am I moving towards them?
     if medikits_visible:
+        features["moving-toward-health"] = 0
         if medikit_left and turning_left:
             features["moving-toward-health"] = 1
         if medikit_center and moving_forward and not turning:
             features["moving-toward-health"] = 1
         if medikit_right and turning_right:
             features["moving-toward-health"] = 1
-            
-    # Else, no medikits are visible.
-    else:
-        # Am i turning (to find health)?
-        if turning and not moving_forward:
-            features["moving-toward-health"] = 1
 
-        
+            
+    # If no medikits are visible, am I turning to find medikits?
+    if not medikits_visible:
+        depth_buf = buffers.depth_buffer
+
+        # average depth on left and right sides
+        left_depth  = 0
+        right_depth = 0
+        for pixel in range(0, screen_height):
+            left_depth += depth_buf[pixel][0]
+            right_depth += depth_buf[pixel][screen_width - 1]
+        left_depth  /= float(screen_height)
+        right_depth /= float(screen_height)
+
+        if right_depth > left_depth:
+            right_side_open = True
+            left_side_open  = False
+        else:
+            right_side_open = False
+            left_side_open  = True
+            
+        features["finding-health"] = 0
+        if turning_left and left_side_open and not moving_forward:
+            features["finding-health"] = 1
+        if turning_right and right_side_open and not moving_forward:
+            features["finding-health"] = 1
             
         
     return features
