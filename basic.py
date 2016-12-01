@@ -40,7 +40,7 @@ game.load_config("../../examples/config/basic.cfg")
 scenario = "basic"
 
 # Sets resolution. Default is 320X240
-game.set_screen_resolution(ScreenResolution.RES_160X120)
+game.set_screen_resolution(ScreenResolution.RES_640X480)
 
 # Enables depth buffer.
 game.set_depth_buffer_enabled(True)
@@ -50,45 +50,6 @@ game.set_labels_buffer_enabled(True)
 
 # Enables buffer with top down map of the current episode/level.
 game.set_automap_buffer_enabled(True)
-
-# Adds game variables that will be included in state.
-"""
-game.add_available_game_variable(GameVariable.KILLCOUNT)
-game.add_available_game_variable(GameVariable.ITEMCOUNT)
-game.add_available_game_variable(GameVariable.SECRETCOUNT)
-game.add_available_game_variable(GameVariable.FRAGCOUNT)
-game.add_available_game_variable(GameVariable.DEATHCOUNT)
-game.add_available_game_variable(GameVariable.HEALTH)
-game.add_available_game_variable(GameVariable.ARMOR)
-game.add_available_game_variable(GameVariable.DEAD)
-game.add_available_game_variable(GameVariable.ON_GROUND)
-game.add_available_game_variable(GameVariable.ATTACK_READY)
-game.add_available_game_variable(GameVariable.SELECTED_WEAPON)
-game.add_available_game_variable(GameVariable.SELECTED_WEAPON_AMMO)
-game.add_available_game_variable(GameVariable.AMMO0)
-game.add_available_game_variable(GameVariable.AMMO1)
-game.add_available_game_variable(GameVariable.AMMO2)
-game.add_available_game_variable(GameVariable.AMMO3)
-game.add_available_game_variable(GameVariable.AMMO4)
-game.add_available_game_variable(GameVariable.AMMO5)
-game.add_available_game_variable(GameVariable.AMMO6)
-game.add_available_game_variable(GameVariable.AMMO7)
-game.add_available_game_variable(GameVariable.AMMO8)
-game.add_available_game_variable(GameVariable.AMMO9)
-game.add_available_game_variable(GameVariable.WEAPON0)
-game.add_available_game_variable(GameVariable.WEAPON1)
-game.add_available_game_variable(GameVariable.WEAPON2)
-game.add_available_game_variable(GameVariable.WEAPON3)
-game.add_available_game_variable(GameVariable.WEAPON4)
-game.add_available_game_variable(GameVariable.WEAPON5)
-game.add_available_game_variable(GameVariable.WEAPON6)
-game.add_available_game_variable(GameVariable.WEAPON7)
-game.add_available_game_variable(GameVariable.WEAPON8)
-game.add_available_game_variable(GameVariable.WEAPON9)
-game.add_available_game_variable(GameVariable.POSITION_X)
-game.add_available_game_variable(GameVariable.POSITION_Y)
-game.add_available_game_variable(GameVariable.POSITION_Z)
-"""
 
 # Turns on the sound. (turned off by default)
 game.set_sound_enabled(True)
@@ -119,7 +80,13 @@ agent = ApproximateQAgent()
 
 for i in range(episodes):
     print("Episode #" + str(i + 1))
+    if i > episodes / 2:
+        agent.stopTraining()
+        print("Ending training mode.")
+        print("Entering testing mode.")
+    
 
+    
     # Starts a new episode. It is not needed right after init() but it doesn't cost much. At least the loop is nicer.
     game.new_episode()
     

@@ -30,7 +30,12 @@ class ApproximateQAgent():
         
     def getWeights(self):
         return self.weights
-        
+
+    def stopTraining(self):
+        self.epsilon = 0.0
+        self.gamme   = 0.8
+        self.alpha   = 0.0
+    
     def getQValue(self, state, action):
         """
         Returns Q(state, action)

@@ -58,19 +58,13 @@ def objectCoordinates(game_state):
 # must be the first three game variables added.
 #
 # game_state: a ViZDoom game state (game.get_state())
-#
+# my_pos:     The position of the marine as a tuple (X, Y, Z)
+# 
 # returns: A dictionary containing the distances to each object
 #          from the marine.
 """
-def objectDistances(game_state):
-    gs = game.get_state()
-    coordinates = {}
-    for l in gs.labels:
-        coordinates[l.value] = [l.object_position_x, l.object_position_y,
-                                l.object_position_z]
-
-    gv = gs.game_variables
-    my_pos = (gv[0], gv[1], gv[2])
+def objectDistances(game_state, my_pos):
+    coordinates = objectCoordinates(game_state)
     distances = {}
     
     for key in list(coordinates.keys()):
@@ -92,34 +86,45 @@ def objectDistances(game_state):
 #
 # returns: A dictionary containing all objects on the screen.
 """
-def extractObjects(game_state, resolution):
+def extractObjects(game_state, resolution, my_pos):
     screen_width, screen_height = resolution
+    distances   = objectDistances(game_state, my_pos)
     coordinates = objectCoordinates(game_state)    
     labels_buf  = game_state.labels_buffer
 
-    objects     = {}
+    labels  = {}
+    objects = {}
     
+    for l in game_state.labels:
+        labels[l.value] = (l.object_id, l.object_name)
+        
     if labels_buf == None:
         return objects
     else:
         # Examine every cell of the buffer.
-        for row in range(0, screen_height):
-            for col in range(0, screen_width):
+        for row in range(0, screen_height, 4):
+            for col in range(0, screen_width, 4):
                 value = labels_buf[row][col]
                 # If it has a value other than 0 (0 == No object seen)
                 if not (value == 0):
 
                     # If the object isn't in the dictionary, add it.
                     if not value in list(objects.keys()):
-                        objects[value] = [col, col, coordinates[value]]
+                        objects[value] = [col, col,            #left, right pixel
+                                          coordinates[value],  # object coordinates
+                                          distances[value],    # object distance
+                                          labels[value][0],    # object id
+                                          labels[value][1]]    # object name
 
                     # Otherwise, update the left or right most pixel location.
                     else:
-                        left, right, coords = objects[value]
+                        left, right, coords, dist, obj_id, obj_name = objects[value]
                         if col < left:
-                            objects[value] = [col, right, coords]
+                            objects[value] = [col, right, coords,
+                                              dist, obj_id, obj_name]
                         elif col > right:
-                            objects[value] = [left, col, coords]
+                            objects[value] = [left, col, coords,
+                                              dist, obj_id, obj_name]
 
         return objects
 
@@ -141,9 +146,14 @@ def extractObjects(game_state, resolution):
 def getGameState(game, scenario, all_actions):
     gs = game.get_state()
     resolution = (game.get_screen_width(), game.get_screen_height())
+
+    my_pos = (game.get_game_variable(GameVariable.POSITION_X),
+              game.get_game_variable(GameVariable.POSITION_Y),
+              game.get_game_variable(GameVariable.POSITION_Z))
+
     
     return (gs,                             #ViZDoom game state
-            extractObjects(gs, resolution), #Dictionary of visible objects
+            extractObjects(gs, resolution, my_pos), #Dictionary of visible objects
             all_actions,                    #All possible actions
             resolution,                     #Resolution of the game screen
             gs.game_variables,              #Game variables
