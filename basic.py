@@ -80,7 +80,7 @@ agent = ApproximateQAgent()
 
 for i in range(episodes):
     print("Episode #" + str(i + 1))
-    if i > episodes / 2:
+    if i == int(episodes / 2):
         agent.stopTraining()
         print("Ending training mode.")
         print("Entering testing mode.")
