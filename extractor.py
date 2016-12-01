@@ -26,11 +26,11 @@ def getBasicFeatures(state, action):
     center_screen  = screen_width / 2
     
     features   = util.Counter()
-    #features["bias"] = 1.0
+
+    moving_left, moving_right, shooting = action
     
     objectKeys = list(objects.keys())
     
-    #closestObject = float('inf')
     
     enemy_left   = False
     enemy_center = False
@@ -39,35 +39,29 @@ def getBasicFeatures(state, action):
 
     # Determine if there are enemies to the left, right, and center
     for key in objectKeys:
-        left, right, coords = objects[key]
+        left, right, coords, dist, obj_id, obj_name = objects[key]
         # Ignore if the object is self (value of self is 255).
-        if not key == 255:
-            # If an enemy is to the left
+        if obj_name == 'Cacodemon':
+            # If an enemy is to the right
             if center_screen in range(0, left):
-                enemy_left = True
+                enemy_right = True
             # If an enemy is in my sights? (center)
             if center_screen in range(left, right):
                 enemy_center = True
             # If an enemy is to the right?
             if center_screen in range(right, screen_width):
-                enemy_right = True
+                enemy_left = True
                 
 
-    # Am I moving in the correct direction?
-    features["moving-in-correct-direction"] = 0
-    if enemy_left and action == [True, False, False]:
-        features["moving-in-correct-direction"] = 1
-    if enemy_right and action == [False, True, False]:
-        features["moving-in-correct-direction"] = 1
+    # Am I moving in the wrong direction?
+    if enemy_left and moving_right:
+        features["moving-in-wrong-direction"] = 1
+    if enemy_right and moving_left:
+        features["moving-in-wrong-direction"] = 1
             
     # Did I shoot at nothing? If yes, value is 1. No, value is 0.
     # List all actions that shoot.
-    shoot_actions = []
-    for a in all_actions:
-        if a[2] == True:
-            shoot_actions.append(a)
-                
-    if (not enemy_center) and (action in shoot_actions):
+    if (not enemy_center) and shooting:
         features["shot-at-nothing"] = 1
     else:
         features["shot-at-nothing"] = 0
@@ -98,17 +92,12 @@ def getHealthFeatures(state, action):
         medikits_visible = True
 
         
-    # My position
-    gv = buffers.game_variables
-    my_pos = (gv[0], gv[1], gv[2])
-
-    
     # What is the closest medikit?
     closest_medikit = (None, float('inf'))
     for key in objectKeys:
-        distance_to_medikit = doomUtils.distance(my_pos, objects[key][2])
-        if distance_to_medikit < closest_medikit[1]:
-            closest_medikit = (key, distance_to_medikit)
+        left, right, coords, dist, obj_id, obj_name = objects[key]
+        if dist < closest_medikit[1]:
+            closest_medikit = (key, dist)
 
     # If there is a medikit that's closest.
     if not closest_medikit[0] == None:
