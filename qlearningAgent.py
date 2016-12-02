@@ -60,7 +60,7 @@ class ApproximateQAgent():
         there are no legal actions, which is the case at the
         terminal state, you should return a value of 0.0.
         """
-        buffers, objects, all_actions, res, gvars, isTerminal, scenario = state
+        buffers, objects, all_actions, prev_action, res, isTerminal, scenario = state
         
         maxQValue = float('-inf')
 
@@ -81,7 +81,7 @@ class ApproximateQAgent():
         are no legal actions, which is the case at the terminal state,
         you should return None.
         """
-        buffers, objects, all_actions, res, gvars, isTerminal, scenario = state
+        buffers, objects, all_actions, prev_action, res, isTerminal, scenario = state
 
         maxQValue  = self.computeValueFromQValues(state)
         maxActions = []
@@ -109,8 +109,8 @@ class ApproximateQAgent():
 
         action = None
 
-        buffers, objects, all_actions, res, gvars, isTerminal, scenario = state
-        
+        buffers, objects, all_actions, prev_action, res, isTerminal, scenario = state
+
         # if state == 'TERMINAL STATE': return None
         if isTerminal:
             return action
@@ -130,8 +130,9 @@ class ApproximateQAgent():
         """
         Update weights based off on transition
         """
-        buffers, objects, all_actions, res, gvars, isTerminal, scenario = state
         
+        buffers, objects, all_actions, prev_action, res, isTerminal, scenario = state
+
         # Calculate "difference", to be used in weight calculation
         maxQ  = self.computeValueFromQValues(nextState)
         Qsa   = self.getQValue(state, action)

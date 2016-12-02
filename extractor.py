@@ -10,7 +10,7 @@ from vizdoom import *
 import util, doomUtils
 
 def getFeatures(state, action):
-    buffers, objects, all_actions, res, gvars, isTerminal, scenario = state
+    buffers, objects, all_actions, prev_action, res, isTerminal, scenario = state
 
     if scenario == "basic":
         return getBasicFeatures(state, action)
@@ -19,7 +19,7 @@ def getFeatures(state, action):
         return getHealthFeatures(state, action)
 
 def getBasicFeatures(state, action):
-    buffers, objects, all_actions, res, gvars, isTerminal, scenario = state
+    buffers, objects, all_actions, prev_action, res, isTerminal, scenario = state
     
     screen_width, screen_height = res
     
@@ -74,8 +74,7 @@ def getBasicFeatures(state, action):
 def getHealthFeatures(state, action):
     features   = util.Counter()
     
-        
-    buffers, objects, actions, res, gvars, isTerminal, scenario = state
+    buffers, objects, all_actions, prev_action, res, isTerminal, scenario = state
     
     screen_width, screen_height = res
     
@@ -100,7 +99,7 @@ def getHealthFeatures(state, action):
             closest_medikit = (key, dist)
 
     # If there is a medikit that's closest.
-    if not closest_medikit[0] == None:
+    if not (closest_medikit[0] == None):
         # Is the closest medikit to the left, center, or right?
         medikit_left = medikit_center = medikit_right = False
         center = screen_width / 2
@@ -115,7 +114,6 @@ def getHealthFeatures(state, action):
 
     # If medikits are visible, am I moving towards them?
     if medikits_visible:
-        features["moving-toward-health"] = 0
         if medikit_left and turning_left:
             features["moving-toward-health"] = 1
         if medikit_center and moving_forward and not turning:
@@ -145,9 +143,9 @@ def getHealthFeatures(state, action):
             left_side_open  = True
             
         features["finding-health"] = 0
-        if turning_left and left_side_open and not moving_forward:
+        if turning_left and left_side_open:
             features["finding-health"] = 1
-        if turning_right and right_side_open and not moving_forward:
+        if turning_right and right_side_open:
             features["finding-health"] = 1
             
         
