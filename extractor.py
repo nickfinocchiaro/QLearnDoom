@@ -18,6 +18,15 @@ def getFeatures(state, action):
     elif scenario == "health":
         return getHealthFeatures(state, action)
 
+    elif scenario == "defend the line":
+        return getDefendTheLineFeatures(state, action)
+
+    elif scenario == "health gathering supreme":
+        return getHealthGatheringSupremeFeatures(state, action)
+
+
+
+    
 def getBasicFeatures(state, action):
     buffers, objects, all_actions, prev_action, res, isTerminal, scenario = state
     
@@ -149,4 +158,21 @@ def getHealthFeatures(state, action):
             features["finding-health"] = 1
             
         
+    return features
+
+
+def getDefendTheLineFeatures(state, action):
+    ################################
+    #FUNCTION STUB FOR NICK
+    ###############################
+
+    features = util.Counter()
+    return features
+    
+def getHealthGatheringSupremeFeatures(state, action):
+    ##################################
+    #FUNCTION STUB FOR BRIAN
+    ##################################
+
+    features = util.Counter()
     return features
