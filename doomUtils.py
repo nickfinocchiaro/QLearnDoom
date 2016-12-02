@@ -151,11 +151,12 @@ def getGameState(game, scenario, all_actions):
               game.get_game_variable(GameVariable.POSITION_Y),
               game.get_game_variable(GameVariable.POSITION_Z))
 
+    prev = game.get_last_action()
     
     return (gs,                             #ViZDoom game state
             extractObjects(gs, resolution, my_pos), #Dictionary of visible objects
             all_actions,                    #All possible actions
+            prev,                           #Last action performed
             resolution,                     #Resolution of the game screen
-            gs.game_variables,              #Game variables
             game.is_episode_finished(),     #Terminal state?
             scenario)                       #The game scenario
