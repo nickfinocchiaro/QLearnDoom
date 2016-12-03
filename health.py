@@ -27,10 +27,16 @@ import math, doomUtils
 # Create DoomGame instance. It will run the game and communicate with you.
 game = DoomGame()
 
+# Load health gathering scenario
 game.load_config("../../examples/config/health_gathering.cfg")
+
+# Sets resolution. Default is 320X240
+game.set_screen_resolution(ScreenResolution.RES_640X480)
+
 
 scenario = "health"
 game.set_mode(Mode.PLAYER)
+#game.set_mode(Mode.SPECTATOR)
 #game.set_ticrate(350)
 
 # Enables buffers
@@ -57,7 +63,8 @@ for a in temp_actions:
 #actions = [[True, False, False], [False, True, False], [False, False, True]]
 
 # Run this many episodes
-episodes = 20
+episodes = 6
+
 
 # Sets time that will pause the engine after each action (in seconds)
 # Without this everything would go too fast for you to keep track of what's happening.
@@ -71,7 +78,7 @@ skiprate   = 1
 
 for i in range(episodes):
     print("Episode #" + str(i + 1))
-    if i > episodes / 2:
+    if i == int(episodes / 2):
         agent.stopTraining()
         print("Ending training mode.")
         print("Entering testing mode.")
@@ -88,8 +95,10 @@ for i in range(episodes):
         state = doomUtils.getGameState(game, scenario, all_actions)
 
         # Print health about every two seconds.
-        if state[0].number % 60 == 0:
-                print("Health: ", game.get_game_variable(GameVariable.HEALTH))
+        #if state[0].number % 60 == 0:
+        #        print("Health: ", game.get_game_variable(GameVariable.HEALTH))
+
+        #print("center depth: ", state[0].depth_buffer[resolution[0] / 2][resolution[1] / 2])
         
         action    = agent.getAction(state)
 
