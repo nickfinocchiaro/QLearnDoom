@@ -7,7 +7,7 @@
 #
 
 from vizdoom import *
-import util, doomUtils
+import time, util, doomUtils
 
 def getFeatures(state, action):
     buffers, objects, all_actions, prev_action, res, isTerminal, scenario = state
@@ -130,6 +130,8 @@ def getHealthFeatures(state, action):
         if medikit_right and turning_right:
             features["moving-toward-health"] = 1
 
+
+
             
     # If no medikits are visible, am I turning to find medikits?
     if not medikits_visible:
@@ -169,10 +171,160 @@ def getDefendTheLineFeatures(state, action):
     features = util.Counter()
     return features
     
-def getHealthGatheringSupremeFeatures(state, action):
-    ##################################
-    #FUNCTION STUB FOR BRIAN
-    ##################################
 
-    features = util.Counter()
+
+
+def getHealthGatheringSupremeFeatures(state, action):
+    features   = util.Counter()
+    
+    buffers, objects, all_actions, prev_action, res, isTerminal, scenario = state
+    
+    screen_width, screen_height = res
+    
+    objectKeys = list(objects.keys())
+        
+    # Am I turning or moving forward?
+    turning_left, turning_right, moving_forward = action
+    turning = turning_left or turning_right
+
+    # Separate objects into medikits and poisons
+    medikits = {}
+    poisons  = {}
+    for key in objectKeys:
+        if (objects[key][5] == "CustomMedikit") or (objects[key][5] == "Medikit"):
+            medikits[key] = objects[key]
+        elif objects[key][5] == "Poison":
+            poisons[key] = objects[key]
+
+    # Are medikits and poisons visible?
+    mKeys = list(medikits.keys())
+    pKeys = list(poisons.keys())
+    medikits_visible = poisons_visible = False
+    if not len(mKeys) == 0:
+        medikits_visible = True
+
+    if not len(pKeys) == 0:
+        poisons_visible  = True
+        #print("poison visible")
+    #if (not medikits_visible) and (not poisons_visible):
+    #    print("nothing visible")
+    
+    # Which medikit is closest?
+    closest_medikit = (None, float('inf'))
+    for key in mKeys:
+        left, right, coords, dist, obj_id, obj_name = objects[key]
+        if dist < closest_medikit[1]:
+            closest_medikit = (key, dist)
+            
+
+    # Which poison is closest?
+    closest_poison = (None, float('inf'))
+    for key in pKeys:
+        left, right, coords, dist, obj_id, obj_name = objects[key]
+        if dist < closest_poison[1]:
+            closest_poison = (key, dist)
+
+    """
+    if turning_left and (not moving_forward):
+        if medikits_visible or poisons_visible:
+            print("")
+            print("")
+            print(objects)
+        if medikits_visible:
+            print("medikit: ", closest_medikit)
+        if poisons_visible:
+            print("poison : ", closest_poison)
+    """
+
+    center = screen_width / 2        
+    # Is the closest medikit to the left, center, or right?
+    if medikits_visible:
+        medikit_left = medikit_center = medikit_right = False
+        left, right, coords, dist, obj_id, obj_name = medikits[closest_medikit[0]]
+        if center in range(0, left):
+            medikit_right  = True
+        elif center in range(left, right):
+            medikit_center = True
+        elif center in range(right, screen_width):
+            medikit_left   = True
+
+
+    # Is the closest poison to the left, center, or right?
+    if poisons_visible:
+        poison_left = poison_center = poison_right = False
+        left, right, coords, dist, obj_id, obj_name = poisons[closest_poison[0]]
+        if center in range(0, left):
+            poison_right  = True
+        elif center in range(left, right):
+            poison_center = True
+        elif center in range(right, screen_width):
+            poison_left   = True
+
+
+    # average depth on left and right sides
+    depth_buf = buffers.depth_buffer
+    left_depth  = 0
+    right_depth = 0
+    for pixel in range(0, screen_height):
+        left_depth += depth_buf[pixel][0]
+        right_depth += depth_buf[pixel][screen_width - 1]
+    left_depth  /= float(screen_height)
+    right_depth /= float(screen_height)
+
+    
+    if right_depth > left_depth:
+        right_side_open = True
+        left_side_open  = False
+    else:
+        right_side_open = False
+        left_side_open  = True
+
+    # Am I blocked on the left or right?
+    blocked_by_walls = blocked_on_left = blocked_on_right = False
+    if left_depth < 5:
+        blocked_on_left = True
+    if right_depth < 5:
+        blocked_on_right = True
+    blocked_by_walls =  blocked_on_left or blocked_on_right
+
+
+    poison_too_close = False
+    if closest_poison[1] < 70:
+        poison_too_close = True
+
+    #if poisons_visible:
+    #    print(closest_poison)
+        
+    # If a poison is too close
+    if poison_too_close:
+        if poison_left and turning_right and (not moving_forward):
+            features["avoiding-poison"] = 10
+        if poison_right and turning_left and (not moving_forward):
+            features["avoiding-poison"] = 10
+            
+    # If medikits are visible, and I'm not blocked  am I moving towards them?
+    if medikits_visible and (not blocked_by_walls):
+        if medikit_left and turning_left:
+            features["moving-toward-health"] = 1
+        if medikit_center and moving_forward and not turning:
+            features["moving-toward-health"] = 1
+        if medikit_right and turning_right:
+            features["moving-toward-health"] = 1
+
+    # If medikits are visible and I'm blocked, am I moving around the walls?
+    elif medikits_visible and blocked_by_walls:
+        if left_side_open and turning_left:
+            features["avoiding-walls"] = 1
+        elif right_side_open and turning_right:
+            features["avoiding-walls"] = 1
+            
+    # If no medikits are visible, am I turning to find medikits?
+    elif not medikits_visible:
+        features["finding-health"] = 0
+        if left_side_open and turning_left:
+            features["finding-health"] = 1
+        if right_side_open and turning_right:
+            features["finding-health"] = 1
+        
     return features
+
