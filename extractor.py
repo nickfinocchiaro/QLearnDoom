@@ -24,6 +24,8 @@ def getFeatures(state, action):
     elif scenario == "health gathering supreme":
         return getHealthGatheringSupremeFeatures(state, action)
 
+    elif scenario == "defend the center":
+        return getDefendTheCenterFeatures(state, action)
 
 
     
@@ -205,10 +207,7 @@ def getHealthGatheringSupremeFeatures(state, action):
 
     if not len(pKeys) == 0:
         poisons_visible  = True
-        #print("poison visible")
-    #if (not medikits_visible) and (not poisons_visible):
-    #    print("nothing visible")
-    
+
     # Which medikit is closest?
     closest_medikit = (None, float('inf'))
     for key in mKeys:
@@ -224,18 +223,7 @@ def getHealthGatheringSupremeFeatures(state, action):
         if dist < closest_poison[1]:
             closest_poison = (key, dist)
 
-    """
-    if turning_left and (not moving_forward):
-        if medikits_visible or poisons_visible:
-            print("")
-            print("")
-            print(objects)
-        if medikits_visible:
-            print("medikit: ", closest_medikit)
-        if poisons_visible:
-            print("poison : ", closest_poison)
-    """
-
+ 
     center = screen_width / 2        
     # Is the closest medikit to the left, center, or right?
     if medikits_visible:
@@ -292,9 +280,7 @@ def getHealthGatheringSupremeFeatures(state, action):
     if closest_poison[1] < 70:
         poison_too_close = True
 
-    #if poisons_visible:
-    #    print(closest_poison)
-        
+         
     # If a poison is too close
     if poison_too_close:
         if poison_left and turning_right and (not moving_forward):
@@ -328,3 +314,111 @@ def getHealthGatheringSupremeFeatures(state, action):
         
     return features
 
+
+
+def getDefendTheCenterFeatures(state, action):
+    buffers, objects, all_actions, prev_action, res, isTerminal, scenario = state
+    
+    screen_width, screen_height = res
+    
+    center_screen  = int(screen_width / 2)
+    
+    features   = util.Counter()
+
+    turning_left, turning_right, shooting = action
+    
+
+    
+    # Separate objects into different categories
+    marines = []
+    demons  = []
+    for key in objects:
+        left, right, coords, dist, obj_id, obj_name = objects[key]
+        if obj_name == "MarineChainsaw":
+            marines.append(objects[key])
+
+        elif obj_name == "Demon":
+            demons.append(objects[key])
+
+
+    # Are marines or demons visible?
+    marines_visible = demons_visible = False
+    if len(marines) > 0:
+        marines_visible = True
+    if len(demons) > 0:
+        demons_visible = True
+
+
+    # Which marine is closest?
+    closest_marine = None
+    if marines_visible:
+        closest_marine = marines[0]
+        for m in marines:
+            left, right, coords, dist, obj_id, obj_name = m
+            if dist < closest_marine[3]:
+                closest_marine = m
+
+    # Which demon is closest?
+    closest_demon = None
+    if demons_visible:
+        closest_demon = demons[0]
+        for d in demons:
+            left, right, coords, dist, obj_id, obj_name = d
+            if dist < closest_demon[3]:
+                closest_demon = d
+
+    # is there a big threat on the screen?
+    big_threat = None
+    if marines_visible and closest_marine[3] < 300:
+        big_threat = closest_marine
+        
+    if demons_visible  and closest_demon[3]  < 400:
+        big_threat = closest_demon
+
+
+    if big_threat == None:
+        threatened = False
+    else:
+        threatened = True
+
+     
+    # If there is a big threat, is it to the left, center, or right?
+    threat_left = threat_center = threat_right = False
+    if threatened:
+        left, right, coords, dist, obj_id, obj_name = big_threat
+        # If an enemy is to the right
+        if center_screen in range(0, left):
+            threat_right = True
+        # If an enemy is in my sights? (center)
+        elif center_screen in range(left, right):
+            threat_center = True
+        # If an enemy is to the right?
+        elif center_screen in range(right, screen_width):
+            threat_left = True
+
+
+    ammo_remaining = False
+    if buffers.game_variables[0] > 0:
+        ammo_remaining = True
+
+    if ammo_remaining:
+        if threat_left and turning_left:
+            features["moving-toward-threat"] = 1
+        if threat_right and turning_right:
+            features["moving-toward-threat"] = 1
+
+        
+        if threat_center and shooting:
+            features["moving-toward-threat"] = 1
+            features["shot-at-threat"] = 1
+            features["looking-for-threats"] = 1
+
+    
+        
+        if (not threatened) and turning_left:
+            features["looking-for-threats"] = 1
+
+
+    
+ 
+    return features
