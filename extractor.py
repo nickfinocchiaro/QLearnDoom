@@ -1,5 +1,5 @@
 #
-# Authors: Brian Thomas
+# Authors: Brian Thomas and Nick Finocchiaro
 #
 # Last Updated: 11/26/2016
 #
@@ -166,11 +166,54 @@ def getHealthFeatures(state, action):
 
 
 def getDefendTheLineFeatures(state, action):
-    ################################
-    #FUNCTION STUB FOR NICK
-    ###############################
+    buffers, objects, all_actions, prev_action, res, isTerminal, scenario = state
+    
+    screen_width, screen_height = res
+    
+    center_screen  = screen_width / 2
+    
+    features   = util.Counter()
 
-    features = util.Counter()
+    moving_left, moving_right, shooting = action
+    
+    objectKeys = list(objects.keys())
+    
+    
+    enemy_left   = False
+    enemy_center = False
+    enemy_right  = False
+
+
+    # Determine if there are enemies to the left, right, and center
+    for key in objectKeys:
+        left, right, coords, dist, obj_id, obj_name = objects[key]
+        # Ignore if the object is self (value of self is 255).
+        if obj_name == 'DoomImp':
+            # If an enemy is to the right
+            if center_screen in range(0, left):
+                enemy_right = True
+            # If an enemy is in my sights? (center)
+            if center_screen in range(left, right):
+                enemy_center = True
+            # If an enemy is to the right?
+            if center_screen in range(right, screen_width):
+                enemy_left = True
+                
+
+    # Am I moving in the wrong direction?
+    if enemy_left and moving_right:
+        features["moving-in-wrong-direction"] = 1
+    if enemy_right and moving_left:
+        features["moving-in-wrong-direction"] = 1
+            
+    # Did I shoot at nothing? If yes, value is 1. No, value is 0.
+    # List all actions that shoot.
+    if (not enemy_center) and shooting:
+        features["shot-at-nothing"] = 1
+    else:
+        features["shot-at-nothing"] = 0
+
+            
     return features
     
 
