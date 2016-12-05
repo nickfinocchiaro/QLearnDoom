@@ -1,4 +1,14 @@
 #!/usr/bin/env python
+#
+# Authors: Nicholas Finocchiaro and Brian Thomas
+#
+# We have extended this code to suit the needs of our 
+# artificial intelligence final project. A ViZDOOM q-learner.
+# 
+#
+# all licensing information can be found here:
+# https://github.com/Marqt/ViZDoom#cite-as
+#
 
 #####################################################################
 # This script presents how to use the most basic features of the environment.
@@ -17,32 +27,37 @@ from vizdoom import *
 
 from random import choice
 from time import sleep
-#from healthlearningAgent import *
 from qlearningAgent import *
-
+import doomUtils
 import itertools as it
-import math, doomUtils
-
+import sys
 
 # Create DoomGame instance. It will run the game and communicate with you.
 game = DoomGame()
 
-# Load health gathering scenario
-game.load_config("../../examples/config/health_gathering.cfg")
-
-game.set_doom_scenario_path("../../scenarios/health_gathering_supreme.wad")
+# Now it's time for configuration!
+game.load_config("../../examples/config/defend_the_center.cfg")
+scenario = "defend the center"
 
 # Sets resolution. Default is 320X240
 game.set_screen_resolution(ScreenResolution.RES_640X480)
-scenario = "health gathering supreme"
 
-#game.set_mode(Mode.PLAYER)
-#game.set_mode(Mode.SPECTATOR)
-#game.set_ticrate(350)
-
-# Enables buffers
-game.set_labels_buffer_enabled(True)
+# Enables depth buffer.
 game.set_depth_buffer_enabled(True)
+
+# Enables labeling of in game objects labeling.
+game.set_labels_buffer_enabled(True)
+
+# Enables buffer with top down map of the current episode/level.
+game.set_automap_buffer_enabled(True)
+
+# Turns on the sound. (turned off by default)
+game.set_sound_enabled(True)
+
+
+#game.set_mode(Mode.ASYNC_PLAYER)
+#game.set_mode(Mode.SPECTATOR)
+#game.set_ticrate(70)
 
 
 # Initialize the game. Further configuration won't take any effect from now on.
@@ -50,31 +65,23 @@ game.set_depth_buffer_enabled(True)
 game.init()
 
 # Define some actions. Each list entry corresponds to declared buttons:
-# MOVE_LEFT, MOVE_RIGHT, ATTACK
-# 5 more combinations are naturally possible but only 3 are included for transparency when watching.
-#actions = [[True, False, False], [False, True, False], [False, False, True]]
-n = game.get_available_buttons_size()
-all_actions = []
-temp_actions = [list(a) for a in it.product([False, True], repeat=n)]
-# Remove actions where you turn left and turn right at the same time
-for a in temp_actions:
-	if not (a[0] == True and a[1] == True):
-		all_actions.append(a)	
+# TURN_LEFT, TURN_RIGHT, ATTACK
+all_actions = [[True, False, False], [False, True, False],
+               [False, False, True]]
 
-#actions = [[True, False, False], [False, True, False], [False, False, True]]
 
 # Run this many episodes
 episodes = 10
-
 
 # Sets time that will pause the engine after each action (in seconds)
 # Without this everything would go too fast for you to keep track of what's happening.
 sleep_time = 1 / DEFAULT_TICRATE # = 0.028
 
 
-agent      = ApproximateQAgent()
-resolution = (game.get_screen_width(), game.get_screen_height())
-#skiprate   = 4
+screen_width = game.get_screen_width()
+screen_height = game.get_screen_height()
+resolution = (screen_width, screen_height)
+agent = ApproximateQAgent()
 
 
 for i in range(episodes):
@@ -83,33 +90,35 @@ for i in range(episodes):
         agent.stopTraining()
         print("Ending training mode.")
         print("Entering testing mode.")
-        
-    # Starts a new episode.
+    
+
+    
+    # Starts a new episode. It is not needed right after init() but it doesn't cost much. At least the loop is nicer.
     game.new_episode()
+    
 
     while not game.is_episode_finished():
 
         ##############################
         """ *** BEGIN OUR CODE *** """
         ##############################
+
+        state        = doomUtils.getGameState(game, scenario, all_actions)
+
+        action       = agent.getAction(state)
         
-        state = doomUtils.getGameState(game, scenario, all_actions)
+        reward       = game.make_action(action)
 
-        action    = agent.getAction(state)
-
-        reward    = game.make_action(action)        
-       
-        nextState = doomUtils.getGameState(game, scenario, all_actions)
+        nextState    = doomUtils.getGameState(game, scenario, all_actions)
 
         agent.update(state, action, nextState, reward)
-                            
+
         ###############################
         """ *** END OF OUR CODE *** """
         ###############################
 
-
-        if sleep_time > 0:
-            sleep(sleep_time)
+    if sleep_time > 0:
+        sleep(sleep_time)
 
     # Check how the episode went.
     print("Episode finished.")
@@ -118,4 +127,3 @@ for i in range(episodes):
 
 # It will be done automatically anyway but sometimes you need to do it in the middle of the program...
 game.close()
-

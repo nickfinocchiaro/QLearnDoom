@@ -63,7 +63,7 @@ for a in temp_actions:
 #actions = [[True, False, False], [False, True, False], [False, False, True]]
 
 # Run this many episodes
-episodes = 6
+episodes = 10
 
 
 # Sets time that will pause the engine after each action (in seconds)

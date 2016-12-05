@@ -65,7 +65,7 @@ all_actions = [[True, False, False], [False, True, False],
 
 
 # Run this many episodes
-episodes = 30
+episodes = 10
 
 # Sets time that will pause the engine after each action (in seconds)
 # Without this everything would go too fast for you to keep track of what's happening.
